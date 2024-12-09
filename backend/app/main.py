@@ -41,7 +41,7 @@ class TransactionResponse(TransactionCreate):
 
 @app.get("/")
 async def root():
-    return {"message": "Finance Tracker API"}
+    return {"message": "Finance Tracking API"}
 
 @app.post("/transactions/", response_model=TransactionResponse)
 def create_transaction(transaction: TransactionCreate, db: Session = Depends(get_db)):
@@ -54,3 +54,7 @@ def create_transaction(transaction: TransactionCreate, db: Session = Depends(get
 @app.get("/transactions/", response_model=List[TransactionResponse])
 def get_transactions(db: Session = Depends(get_db)):
     return db.query(models.Transaction).all()
+
+@app.get("/transactions/{transaction_id}", response_model=TransactionResponse)
+def get_transaction_by_id(transaction_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
