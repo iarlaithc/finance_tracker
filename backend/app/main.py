@@ -2,13 +2,12 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from . import models
+from .models import Transaction,TransactionCreate,TransactionResponse, Base
 from .database import engine, SessionLocal
-from pydantic import BaseModel
 from datetime import datetime
 from typing import List
 
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Finance Tracker API", version="1.0.0")
 
@@ -27,18 +26,6 @@ def get_db():
     finally:
         db.close()
 
-class TransactionCreate(BaseModel):
-    amount: float
-    description: str
-    category: str
-
-class TransactionResponse(TransactionCreate):
-    id: int
-    date: datetime
-    
-    class Config:
-        from_attributes = True
-
 @app.get("/", status_code=status.HTTP_200_OK)
 async def root():
     return {
@@ -49,7 +36,7 @@ async def root():
 
 @app.post("/transactions/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 def create_transaction(transaction: TransactionCreate, db: Session = Depends(get_db)):
-    db_transaction = models.Transaction(**transaction.dict())
+    db_transaction = Transaction(**transaction.dict())
     db.add(db_transaction)
     db.commit()
     db.refresh(db_transaction)
@@ -57,15 +44,15 @@ def create_transaction(transaction: TransactionCreate, db: Session = Depends(get
 
 @app.get("/transactions/", response_model=List[TransactionResponse])
 def get_transactions(db: Session = Depends(get_db)):
-    return db.query(models.Transaction).all()
+    return db.query(Transaction).all()
 
 @app.get("/transactions/{transaction_id}", response_model=TransactionResponse)
 def get_transaction_by_id(transaction_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
+    return db.query(Transaction).filter(Transaction.id == transaction_id).first()
 
 @app.delete("/transaction/{transaction_id}", response_model=TransactionResponse)
 def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
-    transaction = db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
+    transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if transaction is None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"Transaction with id {transaction_id} not found.")
     db.delete(transaction)

@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, Float, String, DateTime
 from datetime import datetime
 from .database import Base
+from pydantic import BaseModel
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -11,3 +12,15 @@ class Transaction(Base):
     description = Column(String, nullable=False)
     category = Column(String, nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
+
+class TransactionCreate(BaseModel):
+    amount: float
+    description: str
+    category: str
+
+class TransactionResponse(TransactionCreate):
+    id: int
+    date: datetime
+    
+    class Config:
+        from_attributes = True
