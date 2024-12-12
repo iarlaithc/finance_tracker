@@ -1,5 +1,5 @@
 # backend/app/main.py
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .models import Transaction,TransactionCreate,TransactionResponse, Base
@@ -50,11 +50,11 @@ def get_transactions(db: Session = Depends(get_db)):
 def get_transaction_by_id(transaction_id: int, db: Session = Depends(get_db)):
     return db.query(Transaction).filter(Transaction.id == transaction_id).first()
 
-@app.delete("/transaction/{transaction_id}", response_model=TransactionResponse)
+@app.delete("/transactions/{transaction_id}", response_model=TransactionResponse)
 def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if transaction is None:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = f"Transaction with id {transaction_id} not found.")
     db.delete(transaction)
     db.commit()
-    return None
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
